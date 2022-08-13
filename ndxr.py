@@ -9,6 +9,7 @@ class NDXR:
         self.br = br
 
         self.mesh_informations = []
+        self.boneFlags = []
 
         self.NDWD_position = 0
 
@@ -24,186 +25,85 @@ class NDXR:
         type = br.readUShort()
         boneCount = br.readUShort()
         
-        self.face_buffer_start = br.readUInt() + 0x30
-        self.face_buffer_size = br.readUInt()
+        poly_clump_start = br.readUInt() + 0x30
+        poly_clump_size = br.readUInt()
         
-        self.vertex_buffer_start = self.face_buffer_start + self.face_buffer_size
-        self.vertex_buffer_size = br.readUInt()
+        vertex_clump_start = poly_clump_start + poly_clump_size
+        vertex_clump_size = br.readUInt()
         
-        self.vertexAddBufferStart = self.vertex_buffer_start + self.vertex_buffer_size
-        self.vertexAddBufferSize = br.readUInt()
+        vertex_add_clump_start = vertex_clump_start + vertex_clump_size
+        vertex_add_clump_size = br.readUInt()
         
-        self.meshNameOffset = self.vertexAddBufferStart + self.vertexAddBufferSize
+        name_start = vertex_add_clump_start + vertex_add_clump_size
 
         boundingSphere = (br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat())
 
-        self.read_mesh_informations(br, mesh_count)
-        self.read_submesh_informations()
-        
-        self.get_materials()
-        self.get_buffers()
-        self.get_names()
-
-    def read_mesh_informations(self, br, mesh_count):
-
+        objs = []
         for i in range(mesh_count):
 
-            mesh_information = {
-                "mesh_name_offset" : 0,
-                "submesh_count" : 0,
-                "submesh_informations" : [],
-
-                "mesh_name": None
-            }
+            obj = NDXR.OBJECT_DATA()
 
             boundingSphere = (br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat())
-            #temp = br.tell() + 4
-            #br.seek(self.meshNameOffset + br.readUInt())
-            
-            mesh_information["mesh_name_offset"] = br.readUInt() + self.meshNameOffset
-            br.readUInt()
+            temp = br.tell() + 4
+            br.seek(name_start + br.readUInt())
+            obj.name = br.readString()
+
+            br.seek(temp, 0)
             br.readUShort()
-            mesh_information["submesh_count"] = br.readUShort()
-            br.readUInt()
+            self.boneFlags[i].append(br.readUShort())
+            obj.singlebind = br.readShort()
+            obj.polyCount = br.readUShort()
+            obj.positionb = br.readInt()
 
-            self.mesh_informations.append(mesh_information)
-
-    def read_submesh_informations(self, br):
-
-        for mesh_informations in self.mesh_informations:
-
-            for i in range(mesh_informations["submesh_count"]):
-
-                submesh_information = {
-                    "face_buffer_offset" : 0,
-                    "vertex_buffer_offset" : 0,
-                    "vertex_add_buffer_offset" : 0,
-                    "vertex_count" : 0,
-                    "vertex_flag" : 0,
-                    "uv_flag" : 0,
-                    "material_properties_offset" : 0,
-                    "face_count" : 0,
-
-                    "material_properties" :
-                        {
-                            "textures_properties" : [],
-                        },
-                    "face_buffer" : [],
-                    "vertex_buffer" : 
-                        {
-                        "positions" : [],
-                        "colors" : [],
-                        "normals" : [],
-                        "texCoords1" : [],
-                        "texCoords2" : []
-                        }
-                }
-
-                submesh_information["face_buffer_offset"] = br.readUInt() + self.face_buffer_start
-                submesh_information["vertex_buffer_offset"] = br.readUInt() + self.vertex_buffer_start
-                submesh_information["vertex_add_buffer_offset"] = br.readUInt() + self.vertexAddBufferStart
-                submesh_information["vertex_count"] = br.readUShort()
-                submesh_information["vertex_flag"] = br.readByte()
-                submesh_information["uv_flag"] = br.readByte()
-                submesh_information["material_properties_offset"] = br.readUInt()
-                br.readUInt()
-                br.readUInt()
-                br.readUInt()
-                submesh_information["face_count"] = br.readUShort()
-                br.readByte()
-                br.readByte()
-                br.seek(12, 1)
-
-                mesh_informations["submesh_informations"].append(submesh_information)
-
-    def get_materials(self, br):
-
-        for mesh_informations in self.mesh_informations:
-
-            for submesh_information in mesh_informations["submesh_informations"]:
-
-                br.seek(submesh_information["material_properties_offset"] + self.NDWD_position, 0)
-                
-                br.readUShort()
-                br.readUShort()
-                br.readBytes(4) # zeros
-                br.readUShort()
-                texture_count = br.readUShort() # count ?
-                br.readUInt()
-                br.readUShort()
-                br.readUShort()
-                br.readBytes(12) # zeros
-                
-                for i in range(texture_count):
-                    texture_properties = {
-                        "texture_name" : ""
-                    }
-
-                    texture_properties["texture_name"] = str(binascii.hexlify(br.readBytes(4)), "ascii") # texture name
-                    br.readBytes(8) # zeros
-                    br.readByte() # ?
-                    br.readByte() # ? 
-                    br.readByte() # ? 
-                    br.readByte() # ?
-                    br.readByte() # ?
-                    br.readByte() # ?
-                    br.readByte() # ?
-                    br.readByte() # ?
-                    br.readBytes(4) # ?
-
-                    submesh_information["material_properties"]["textures_properties"].append(texture_properties)
-
-                br.readBytes(16) # zeros ?
-
-    def get_buffers(self):
-
-        for mesh_informations in self.mesh_informations:
-
-            for submesh_information in mesh_informations["submesh_informations"]:
-                
-                self.br.seek(submesh_information["face_buffer_offset"] + self.NDWD_position, 0)
-                self.read_face_buffer(submesh_information)
-
-                self.br.seek(submesh_information["vertex_buffer_offset"] + self.NDWD_position, 0)
-                self.read_vertex_buffer(submesh_information)
-
-                #self.br.seek(submesh_information["vertex_add_buffer_offset"], 0)
-
-
-    def read_face_buffer(self, submesh_information):
-        for i in range(submesh_information["face_count"]):
-            submesh_information["face_buffer"].append(self.br.readUShort())
-
-    def read_vertex_buffer(self, submesh_information):
-        for i in range(submesh_information["vertex_count"]):
-            submesh_information["vertex_buffer"]["positions"].append([self.br.readFloat(), self.br.readFloat(),self.br.readFloat()])
+            objs.append(obj)
             
-            if submesh_information["vertex_flag"] >= 0x6:
-                nx = self.br.readHalfFloat()
-                ny = self.br.readHalfFloat()
-                nz = self.br.readHalfFloat()
-                nq = self.br.readHalfFloat()
-                submesh_information["vertex_buffer"]["normals"].append(Vector((nx,ny,nz)).normalized())
-                
-                if submesh_information["vertex_flag"] == 0x7:
-                    self.br.seek(16, 1) 
-                #elif submesh_information["vertex_flag"] == 0x11: # FIX
-                    #self.br.seek(4, 1)     
+        for obj in objs:
 
-                if submesh_information["uv_flag"] == 0x10:
-                    submesh_information["vertex_buffer"]["texCoords1"].append([self.br.readHalfFloat(), self.br.readHalfFloat()])
-                
-                if submesh_information["uv_flag"] >= 0x12:
-                    submesh_information["vertex_buffer"]["colors"].append([self.br.readUByte() / 255, self.br.readUByte() / 255,self.br.readUByte() / 255, self.br.readUByte() / 255])
-                    submesh_information["vertex_buffer"]["texCoords1"].append([self.br.readHalfFloat(), self.br.readHalfFloat()])
-                
-                if submesh_information["uv_flag"] >= 0x22:
-                    submesh_information["vertex_buffer"]["texCoords2"].append([self.br.readHalfFloat(), self.br.readHalfFloat()])
+            for i in range(obj.polyCount):
 
-    def read_vertex_add_buffer(self, submesh_information):
-        pass
+                poly_data = NDXR.POLY_DATA()
 
-    def get_names(self):
-        for mesh_information in self.mesh_informations:
-            self.br.seek(mesh_information["mesh_name_offset"] + self.NDWD_position, 0)
-            mesh_information["mesh_name"] = self.br.readString()
+                poly_data.polyStart = br.ReadInt() + poly_clump_start
+                poly_data.vertStart = br.ReadInt() + vertex_clump_start
+                poly_data.verAddStart = br.ReadInt() + vertex_add_clump_start
+                poly_data.vertCount = br.ReadUShort()
+                poly_data.vertSize = br.ReadByte()
+                poly_data.UVSize = br.ReadByte()
+                poly_data.texprop1 = br.ReadInt()
+                poly_data.texprop2 = br.ReadInt()
+                poly_data.texprop3 = br.ReadInt()
+                poly_data.texprop4 = br.ReadInt()
+                poly_data.polyCount = br.ReadUShort()
+                poly_data.polySize = br.ReadByte()
+                poly_data.polyFlag = br.ReadByte()
+                br.seek(0xC, 1)
+
+                temp = br.tell()
+
+
+    class OBJECT_DATA :
+
+        def __init__(self) -> None:
+            
+            self.singlebind = 0
+            self.polyCount = 0
+            self.positionb = 0
+            self.name = ""
+
+    class POLY_DATA:
+
+        def __init__(self) -> None:
+            
+            self.polyStart = 0
+            self.vertStart = 0
+            self.verAddStart = 0
+            self.vertCount = 0
+            self.vertSize = 0
+            self.UVSize = 0
+            self.texprop1 = 0
+            self.texprop2 = 0
+            self.texprop3 = 0
+            self.texprop4 = 0
+            self.polyCount = 0
+            self.polySize = 0
+            self.polyFlag = 0
