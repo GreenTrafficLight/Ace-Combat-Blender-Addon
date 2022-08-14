@@ -38,27 +38,27 @@ class FHM:
 
             br.seek(table_entry.offset + 0x30, 0)
 
-            header = br.bytesToString(br.readBytes(4)).replace("\0", "")
+            subheader = br.bytesToString(br.readBytes(4)).replace("\0", "")
 
-            if header == "NDXR":
+            if subheader == "NDXR":
 
                 ndxr = NDXR()
-                ndxr.read()
-
-
+                ndxr.read(br)
 
     def read_table_offset_entry(self, br, count):
 
         for i in range(count):
             table_offset_entry = FHM.TABLE_OFFSET_ENTRY()
-            self.table_offset_entries.append(table_offset_entry.read(br))
+            table_offset_entry.read(br)
+            self.table_offset_entries.append(table_offset_entry)
 
     def read_table_entry(self, br, count):
 
         for i in range(count):
-            br.seek(self.table_offset_entries[i] + 0x30, 0)
+            br.seek(self.table_offset_entries[i].offset + 0x30, 0)
             table_entry = FHM.TABLE_ENTRY()
-            self.tablet_entries.append(table_entry.read(br))
+            table_entry.read(br)
+            self.table_entries.append(table_entry)
 
     class TABLE_OFFSET_ENTRY:
 

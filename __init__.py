@@ -37,7 +37,7 @@ class ImportAceCombat(Operator, ImportHelper):
         return {'FINISHED'}
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportAceCombat.bl_idname, text="WMMT")
+    self.layout.operator(ImportAceCombat.bl_idname, text="Ace Combat")
 
 
 def register():
