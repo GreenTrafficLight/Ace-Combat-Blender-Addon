@@ -21,3 +21,12 @@ def StripToTriangle(triangleStripList):
             if a != b and b != c and c != a:
                 faces.append([a, b, c])
     return faces
+
+def ToTriangle(triangleList):
+    faces = []
+    for i in range(2, len(triangleList), 3):
+        a  = triangleList[i - 2]
+        b  = triangleList[i - 1]
+        c  = triangleList[i]
+        faces.append([a,b,c])
+    return faces

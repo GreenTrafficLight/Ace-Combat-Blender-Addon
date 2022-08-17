@@ -9,6 +9,8 @@ class FHM:
         self.table_offset_entries = []
         self.table_entries = []
 
+        self.ndxr_list = []
+
     def read(self, br):
 
         header = br.bytesToString(br.readBytes(4)).replace("\0", "")
@@ -36,14 +38,22 @@ class FHM:
 
         for table_entry in self.table_entries:
 
-            br.seek(table_entry.offset + 0x30, 0)
+            if table_entry.size != 0:
 
-            subheader = br.bytesToString(br.readBytes(4)).replace("\0", "")
+                br.seek(table_entry.offset + 0x30, 0)
 
-            if subheader == "NDXR":
+                subheader = br.bytesToString(br.readBytes(4)).replace("\0", "")
 
-                ndxr = NDXR()
-                ndxr.read(br)
+                if subheader == "NDXR":
+
+                    ndxr = NDXR()
+                    ndxr.read(br)
+
+                    self.ndxr_list.append(ndxr)
+
+                else :
+
+                    print(br.tell())
 
     def read_table_offset_entry(self, br, count):
 
