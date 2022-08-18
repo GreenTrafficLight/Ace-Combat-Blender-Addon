@@ -1,6 +1,9 @@
+from re import sub
 from .Utilities import *
 
 from .ndxr import *
+from .mnt import *
+from .mop2 import *
 
 class FHM:
 
@@ -10,6 +13,8 @@ class FHM:
         self.table_entries = []
 
         self.ndxr_list = []
+        self.mnt_list = []
+        self.mop2_list = []
 
     def read(self, br):
 
@@ -50,6 +55,20 @@ class FHM:
                     ndxr.read(br)
 
                     self.ndxr_list.append(ndxr)
+
+                elif subheader == "MNT":
+
+                    mnt = MNT()
+                    mnt.read(br)
+
+                    self.mnt_list.append(mnt)
+
+                elif subheader == "MOP2":
+
+                    mop2 = MOP2()
+                    mop2.read(br)
+
+                    self.mop2_list.append(mop2)
 
                 else :
 
