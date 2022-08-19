@@ -1,4 +1,4 @@
-class MOP2:
+class MOP2: # Animation Data
 
     class FHM1_ENTRY:
 
@@ -7,7 +7,7 @@ class MOP2:
             self.size = 0
             self.name_offset = ""
 
-    class KFM1 :
+    class KFM1 : # Vertex morph data
 
         def __init__(self) -> None:
             

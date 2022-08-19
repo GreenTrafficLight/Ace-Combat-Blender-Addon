@@ -18,6 +18,42 @@ def build_mnt(data):
 
     index = 0
 
+
+
+    for mnt in data.mnt_list:
+
+        bone_mapping = []
+
+        name_index = 0
+
+        bpy.ops.object.add(type="ARMATURE")
+        ob = bpy.context.object
+        ob.rotation_euler = ( radians(90), 0, 0 )
+        ob.name = mnt.names[name_index]
+
+        amt = ob.data
+        amt.name = mnt.names[name_index]
+
+        for node in mnt.nodes:
+
+            bone_mapping.append(mnt.names[name_index])
+
+            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+            bone = amt.edit_bones.new(mnt.names[name_index])
+
+            bone.tail = (0.01 , 0.01, 0.01)
+
+            if node.parent_index != -1:
+
+                bone.parent = amt.edit_bones[mnt.names[node.parent_index]]
+
+            name_index += 1
+
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        index += 1
+
+    """"
     for mnt in data.mnt_list:
 
         empty_list = []
@@ -39,11 +75,12 @@ def build_mnt(data):
 
             name_index += 1
 
-        if index > len(data.ndxr_list):
+        if index < len(data.ndxr_list):
 
             build_ndxr(data.ndxr_list[index], empty_list)
 
         index += 1
+    """
 
 def build_ndxr(data, empty_list):
 
@@ -94,6 +131,21 @@ def build_ndxr(data, empty_list):
             
             bm.to_mesh(mesh)
             bm.free()
+
+            """
+            for i in range(len(submesh.vertices["boneIndices"])):
+                if submesh.vertices["boneIndices"] != []:
+                    for k, vg in enumerate(submesh.vertices["boneIndices"][i]):
+                        vg_name = bone_mapping[vg + 1]
+                        if not vg_name in obj.vertex_groups:
+                            group = obj.vertex_groups.new(name=vg_name)
+                        else:
+                            group = obj.vertex_groups[vg_name]
+                        weight = submesh.vertices["boneWeights"][i][k]
+                        if weight > 0.0:
+                            group.add([i], weight, 'REPLACE')
+            """
+            
 
             # Set normals
             mesh.use_auto_smooth = True

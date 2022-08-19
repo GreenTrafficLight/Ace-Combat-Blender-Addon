@@ -4,7 +4,7 @@ from .Utilities import *
 
 import binascii
 
-class MNT: # Nodes ?
+class MNT: # Armature Data
 
 
     class NODE :
