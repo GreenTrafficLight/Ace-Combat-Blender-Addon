@@ -41,7 +41,7 @@ def build_mnt(data):
             bpy.ops.object.mode_set(mode='EDIT', toggle=False)
             bone = amt.edit_bones.new(mnt.names[name_index])
 
-            bone.tail = (0.01 , 0.01, 0.01)
+            bone.tail = (0, 0, 1)
 
             if node.parent_index != -1:
 
@@ -50,6 +50,30 @@ def build_mnt(data):
             name_index += 1
 
         bpy.ops.object.mode_set(mode='OBJECT')
+
+
+        empty_list = []
+
+        name_index = 0
+
+        for node in mnt.nodes:
+
+            if node.index == 0:
+                empty = add_empty(mnt.names[name_index], empty_rotation=( radians(90), 0, 0 ))
+            else:
+                empty = add_empty(mnt.names[name_index])
+
+            if node.parent_index != -1:
+
+                empty.parent = empty_list[node.parent_index]
+
+            empty_list.append(empty)
+
+            name_index += 1
+
+        if index < len(data.ndxr_list):
+
+            build_ndxr(data.ndxr_list[index], empty_list)
 
         index += 1
 

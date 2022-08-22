@@ -1,3 +1,5 @@
+import binascii
+
 class MOP2: # Animation Data
 
     class FHM1_ENTRY:
@@ -17,6 +19,37 @@ class MOP2: # Animation Data
 
             KFM1_position = br.tell() - 4
             br.readUInt()
+            size1 = br.readUInt()
+            KFM1_size = br.readUInt()
+            br.readUShort()
+            count1 = br.readUShort() # 32 bytes each
+            br.readUShort()
+            br.readUShort()
+            offset1 = br.readUInt() # offset for count1
+            offset2 = br.readUInt()
+            offset3 = br.readUInt()
+            br.readBytes(4)
+            name_offset = br.readUInt()
+
+            br.readUShort()
+            br.readUShort()
+
+            br.seek(offset1 + KFM1_position, 0)
+            for i in range(count1):
+                str(binascii.hexlify(br.readBytes(4)), "ascii")
+                br.readUByte()
+                br.readUByte()
+                br.readUByte() # mesh Index
+                br.readUByte()
+                br.readUByte()
+                br.readUByte()
+                br.readUByte()
+                br.readUByte()
+                br.readUShort()
+                br.readUShort()
+                br.readUShort()
+                br.readUShort()
+
 
     def __init__(self) -> None:
         
