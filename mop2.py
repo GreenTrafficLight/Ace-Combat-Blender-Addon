@@ -1,4 +1,5 @@
 import binascii
+from unicodedata import name
 
 class MOP2: # Animation Data
 
@@ -11,20 +12,36 @@ class MOP2: # Animation Data
 
     class KFM1 : # Vertex morph data
 
+        class TRANSFORMATION :
+
+            def __init__(self) -> None:
+                self.translation = None
+                self.unk1 = None
+                self.quaternion = None
+
+            def read(self, br):
+
+                self.translation = (br.readFloat(), br.readFloat(), br.readFloat())
+                self.unk1 = br.readFloat()
+                self.quaternion = (br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat())
+
         def __init__(self) -> None:
             
             self.name = ""
 
+            self.transformations = []
+
         def read(self, br):
 
-            KFM1_position = br.tell() - 4
-            br.readUInt()
+            KFM1_position = br.tell()
+            header = br.bytesToString(br.readBytes(4)).replace("\0", "")
+            self.unk1 = br.readUInt()
             size1 = br.readUInt()
             KFM1_size = br.readUInt()
-            br.readUShort()
+            self.unk2 = br.readUShort()
             count1 = br.readUShort() # 32 bytes each
-            br.readUShort()
-            br.readUShort()
+            self.unk3 = br.readUShort()
+            self.unk4 = br.readUShort()
             offset1 = br.readUInt() # offset for count1
             offset2 = br.readUInt()
             offset3 = br.readUInt()
@@ -50,16 +67,44 @@ class MOP2: # Animation Data
                 br.readUShort()
                 br.readUShort()
 
+            br.seek(offset2 + KFM1_position, 0)
+            br.readUShort()
+            br.readUShort()
+            
+            br.seek(offset3 + KFM1_position, 0)
+            size1 = br.readUInt() # size for offset 4
+            offset4 = br.readUInt() # offset for transformation data ?
+            size2 = br.readUInt() # size for offset 5
+            offset5 = br.readUInt() # offset for animation Data ?
+            
+            br.seek(offset4 + KFM1_position, 0)
+            str(binascii.hexlify(br.readBytes(4)), "ascii")
+            for i in range(count1):
+                br.readBytes(8) # ???
+
+            # Skip zeros ???
+            for i in range(count1 - 1):
+                br.readUInt() # zero
+
+            for i in range(count1 // 2):
+                transformation = MOP2.KFM1.TRANSFORMATION()
+                transformation.read(br)
+                self.transformations.append(transformation)
+
+            br.seek(name_offset + KFM1_position, 0)
+            self.name = br.readString()
 
     def __init__(self) -> None:
         
         self.kfm1_list = []
 
+        self.kfm1_dict = {}
+
     def read(self, br):
 
         MOP2_position = br.tell() - 4
-        br.readUShort()
-        br.readUShort()
+        self.unk1 = br.readUShort()
+        self.unk2 = br.readUShort()
         
         mop2_size = br.readUInt()
         mop2_size2 = br.readUInt() # ?
@@ -89,8 +134,10 @@ class MOP2: # Animation Data
             kfm1 = MOP2.KFM1()
 
             br.seek(kfm1_entry.name_offset + MOP2_position, 0)
-            kfm1.name = br.readString()
+            self.kfm1_dict[br.readString()] = kfm1
             br.seek(kfm1_entry.offset + MOP2_position, 0)
+
+            #kfm1.read(br)
 
             self.kfm1_list.append(kfm1)
 

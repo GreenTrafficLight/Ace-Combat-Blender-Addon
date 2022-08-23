@@ -28,6 +28,8 @@ class MNT: # Armature Data
 
     def __init__(self):
 
+        self.has_meshes = False
+
         self.hashes = []
         self.hash_indices = []
         self.parent_indices = []
@@ -37,14 +39,14 @@ class MNT: # Armature Data
     def read(self, br):
 
         MNT_position = br.tell() - 4
-        br.readUInt()
+        self.unk1 = br.readUInt()
         MNT_size = br.readUInt()
 
         count = br.readUInt()
 
-        br.readUInt() # zeros
+        self.has_meshes = br.readUInt() == 0
 
-        br.readBytes(4)
+        self.unk3 = str(binascii.hexlify(br.readBytes(4)), "ascii")
 
         hashes_offset = br.readUInt()
         hash_indices_offset = br.readUInt()

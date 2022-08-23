@@ -16,9 +16,7 @@ from .Blender import*
 
 def build_mnt(data):
 
-    index = 0
-
-
+    ndxr_index = 0
 
     for mnt in data.mnt_list:
 
@@ -51,7 +49,6 @@ def build_mnt(data):
 
         bpy.ops.object.mode_set(mode='OBJECT')
 
-
         empty_list = []
 
         name_index = 0
@@ -59,7 +56,7 @@ def build_mnt(data):
         for node in mnt.nodes:
 
             if node.index == 0:
-                empty = add_empty(mnt.names[name_index], empty_rotation=( radians(90), 0, 0 ))
+                empty = add_empty(mnt.names[name_index], ob, empty_rotation=( radians(90), 0, 0 ))
             else:
                 empty = add_empty(mnt.names[name_index])
 
@@ -70,12 +67,17 @@ def build_mnt(data):
             empty_list.append(empty)
 
             name_index += 1
+        
 
-        if index < len(data.ndxr_list):
+        """
+        if mnt.has_meshes:
 
-            build_ndxr(data.ndxr_list[index], empty_list)
+            if ndxr_index < len(data.ndxr_list):
 
-        index += 1
+                build_ndxr(data.ndxr_list[ndxr_index], empty_list)
+
+            ndxr_index += 1
+        """
 
     """"
     for mnt in data.mnt_list:
@@ -113,9 +115,19 @@ def build_ndxr(data, empty_list):
         mesh = bpy.data.meshes.new(ndxr_mesh.text)
         obj = bpy.data.objects.new(ndxr_mesh.text, mesh)
 
-        empty = empty_list[ndxr_mesh.singlebind]
+        if ndxr_mesh.singlebind != -1:
 
-        empty.users_collection[0].objects.link(obj)
+            empty = empty_list[ndxr_mesh.singlebind]
+
+            empty.users_collection[0].objects.link(obj)
+
+        else:
+
+            empty = add_empty(ndxr_mesh.text, empty_rotation=( radians(90), 0, 0 ))
+
+            empty.users_collection[0].objects.link(obj)
+
+            
 
         obj.parent = empty
 

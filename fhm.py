@@ -96,7 +96,7 @@ class FHM:
 
         def read(self, br):
 
-            br.readUInt()
+            self.unk1 = br.readUInt()
             self.offset = br.readUInt()
 
     class TABLE_ENTRY:
@@ -106,9 +106,9 @@ class FHM:
             self.size = 0
 
         def read(self, br):
-            br.readUShort()
-            br.readUShort()
-            br.readUInt()
+            self.unk1 = br.readUShort()
+            self.unk2 = br.readUShort()
+            self.unk3 = br.readUInt()
             self.offset = br.readUInt()
             self.size = br.readUInt()
     
