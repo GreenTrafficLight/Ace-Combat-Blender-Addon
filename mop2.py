@@ -96,8 +96,6 @@ class MOP2: # Animation Data
 
     def __init__(self) -> None:
         
-        self.kfm1_list = []
-
         self.kfm1_dict = {}
 
     def read(self, br):
@@ -138,7 +136,5 @@ class MOP2: # Animation Data
             br.seek(kfm1_entry.offset + MOP2_position, 0)
 
             #kfm1.read(br)
-
-            self.kfm1_list.append(kfm1)
 
 

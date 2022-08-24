@@ -41,6 +41,8 @@ class FHM:
 
         self.read_table_entry(br, count)
 
+        index = 0
+
         for table_entry in self.table_entries:
 
             if table_entry.size != 0:
@@ -51,12 +53,16 @@ class FHM:
 
                 if subheader == "NDXR":
 
+                    print(str(index) + " " + subheader + " : " + str(br.tell()))
+
                     ndxr = NDXR()
                     ndxr.read(br)
 
                     self.ndxr_list.append(ndxr)
 
                 elif subheader == "MNT":
+
+                    print(str(index) + " " + subheader + " : " + str(br.tell()))
 
                     mnt = MNT()
                     mnt.read(br)
@@ -65,14 +71,28 @@ class FHM:
 
                 elif subheader == "MOP2":
 
+                    print(str(index) + " " + subheader + " : " + str(br.tell()))
+
                     mop2 = MOP2()
                     mop2.read(br)
 
                     self.mop2_list.append(mop2)
 
-                else :
+                elif subheader == "MATE":
 
-                    print(br.tell())
+                    print(str(index) + " " + subheader + " : " + str(br.tell()))
+
+                elif subheader == "COLH":
+
+                   print(str(index) + " " + subheader + " : " + str(br.tell()))
+
+                else :
+                    
+                    br.seek(-4, 1)
+
+                    print(str(index) + " " + str(br.tell()))
+
+            index += 1
 
     def read_table_offset_entry(self, br, count):
 
