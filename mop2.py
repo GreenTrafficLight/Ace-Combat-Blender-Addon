@@ -132,9 +132,11 @@ class MOP2: # Animation Data
             kfm1 = MOP2.KFM1()
 
             br.seek(kfm1_entry.name_offset + MOP2_position, 0)
-            self.kfm1_dict[br.readString()] = kfm1
+            kfm1_name = br.readString()
+            if kfm1_name == "basepose":
+                self.kfm1_dict[kfm1_name] = kfm1
             br.seek(kfm1_entry.offset + MOP2_position, 0)
 
-            #kfm1.read(br)
+            kfm1.read(br)
 
 

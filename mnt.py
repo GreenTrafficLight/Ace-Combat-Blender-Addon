@@ -28,7 +28,7 @@ class MNT: # Armature Data
 
     def __init__(self):
 
-        self.has_meshes = False
+        self.unk1 = 0
 
         self.hashes = []
         self.hash_indices = []
@@ -44,7 +44,7 @@ class MNT: # Armature Data
 
         count = br.readUInt()
 
-        self.has_meshes = br.readUInt() == 0
+        self.unk1 = br.readUInt()
 
         self.unk3 = str(binascii.hexlify(br.readBytes(4)), "ascii")
 

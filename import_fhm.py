@@ -20,61 +20,59 @@ def build_mnt(data):
 
     for mnt in data.mnt_list:
 
-        bone_mapping = []
+        if mnt != None:
 
-        name_index = 0
+            bone_mapping = []
 
-        bpy.ops.object.add(type="ARMATURE")
-        ob = bpy.context.object
-        ob.rotation_euler = ( radians(90), 0, 0 )
-        ob.name = mnt.names[name_index]
+            name_index = 0
 
-        amt = ob.data
-        amt.name = mnt.names[name_index]
+            bpy.ops.object.add(type="ARMATURE")
+            ob = bpy.context.object
+            ob.rotation_euler = ( radians(90), 0, 0 )
+            ob.name = mnt.names[name_index]
 
-        for node in mnt.nodes:
+            amt = ob.data
+            amt.name = mnt.names[name_index]
 
-            bone_mapping.append(mnt.names[name_index])
+            for node in mnt.nodes:
 
-            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-            bone = amt.edit_bones.new(mnt.names[name_index])
+                bone_mapping.append(mnt.names[name_index])
 
-            bone.tail = (0, 0, 1)
+                bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+                bone = amt.edit_bones.new(mnt.names[name_index])
 
-            if node.parent_index != -1:
+                bone.tail = (0, 0, 1)
 
-                bone.parent = amt.edit_bones[mnt.names[node.parent_index]]
+                if node.parent_index != -1:
 
-            name_index += 1
+                    bone.parent = amt.edit_bones[mnt.names[node.parent_index]]
 
-        bpy.ops.object.mode_set(mode='OBJECT')
+                name_index += 1
 
-        empty_list = []
+            bpy.ops.object.mode_set(mode='OBJECT')
 
-        name_index = 0
+            empty_list = []
 
-        for node in mnt.nodes:
+            name_index = 0
 
-            if node.index == 0:
-                empty = add_empty(mnt.names[name_index], ob)
-            else:
-                empty = add_empty(mnt.names[name_index])
+            for node in mnt.nodes:
 
-            if node.parent_index != -1:
+                if node.index == 0:
+                    empty = add_empty(mnt.names[name_index], ob)
+                else:
+                    empty = add_empty(mnt.names[name_index])
 
-                empty.parent = empty_list[node.parent_index]
+                if node.parent_index != -1:
 
-            empty_list.append(empty)
+                    empty.parent = empty_list[node.parent_index]
 
-            name_index += 1
-        
+                empty_list.append(empty)
 
-        
-        #if mnt.has_meshes:
+                name_index += 1
+            
+            if ndxr_index < len(data.ndxr_list) and data.ndxr_list[ndxr_index] != None:
 
-        if ndxr_index < len(data.ndxr_list):
-
-            build_ndxr(data.ndxr_list[ndxr_index], empty_list)
+                build_ndxr(data.ndxr_list[ndxr_index], empty_list, ob)
 
         ndxr_index += 1
         
@@ -108,7 +106,7 @@ def build_mnt(data):
         index += 1
     """
 
-def build_ndxr(data, empty_list):
+def build_ndxr(data, empty_list, ob):
 
     for ndxr_mesh in data.meshes :
 
@@ -123,7 +121,7 @@ def build_ndxr(data, empty_list):
 
         else:
 
-            empty = add_empty(ndxr_mesh.text)
+            empty = add_empty(ndxr_mesh.text, ob)
 
             empty.users_collection[0].objects.link(obj)
 
@@ -180,13 +178,11 @@ def build_ndxr(data, empty_list):
                             group.add([i], weight, 'REPLACE')
             """
             
-
             # Set normals
             mesh.use_auto_smooth = True
 
             if normals != []:
                 mesh.normals_split_custom_set_from_vertices(normals)
-
 
             last_vertex_count += len(submesh.vertices["positions"])
 
