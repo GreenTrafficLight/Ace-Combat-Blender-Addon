@@ -1,5 +1,8 @@
 import binascii
+
 from unicodedata import name
+
+from mathutils import *
 
 class MOP2: # Animation Data
 
@@ -12,24 +15,25 @@ class MOP2: # Animation Data
 
     class KFM1 : # Vertex morph data
 
-        class TRANSFORMATION :
+        class TRANSFORMATION_TABLE:
 
             def __init__(self) -> None:
-                self.translation = None
-                self.unk1 = None
-                self.quaternion = None
+                self.unk1 = 0
+                self.index = 0
+                self.offset = 0
 
             def read(self, br):
 
-                self.translation = (br.readFloat(), br.readFloat(), br.readFloat())
-                self.unk1 = br.readFloat()
-                self.quaternion = (br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat())
+                self.unk1 = br.readUInt()
+                self.index = br.readUShort()
+                self.offset = br.readUShort()
 
         def __init__(self) -> None:
             
             self.name = ""
 
-            self.transformations = []
+            self.translations = []
+            self.quaternions = []
 
         def read(self, br):
 
@@ -78,18 +82,25 @@ class MOP2: # Animation Data
             offset5 = br.readUInt() # offset for animation Data ?
             
             br.seek(offset4 + KFM1_position, 0)
+            transformation_tables = []
+            transformation_tables_position = br.tell()
             str(binascii.hexlify(br.readBytes(4)), "ascii")
+            transformations_offset = br.readUShort()
+            br.readUShort() # Size of table and transformation
+            
             for i in range(count1):
-                br.readBytes(8) # ???
+                transformation_table = MOP2.KFM1.TRANSFORMATION_TABLE()
+                transformation_table.read(br)
+                transformation_tables.append(transformation_table)
 
-            # Skip zeros ???
-            for i in range(count1 - 1):
-                br.readUInt() # zero
+            for transformation_table in transformation_tables:
 
-            for i in range(count1 // 2):
-                transformation = MOP2.KFM1.TRANSFORMATION()
-                transformation.read(br)
-                self.transformations.append(transformation)
+                br.seek(transformation_table.offset + transformation_tables_position, 0)
+                if transformation_table.index % 2 == 0:
+                    self.translations.append((br.readFloat(), br.readFloat(), br.readFloat()))
+                else:
+                    quaternion = (br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat())
+                    self.quaternions.append(Quaternion((quaternion[3], quaternion[0], quaternion[1], quaternion[2])))
 
             br.seek(name_offset + KFM1_position, 0)
             self.name = br.readString()
@@ -135,8 +146,7 @@ class MOP2: # Animation Data
             kfm1_name = br.readString()
             if kfm1_name == "basepose":
                 self.kfm1_dict[kfm1_name] = kfm1
-            br.seek(kfm1_entry.offset + MOP2_position, 0)
-
-            kfm1.read(br)
+                br.seek(kfm1_entry.offset + MOP2_position, 0)
+                kfm1.read(br)
 
 

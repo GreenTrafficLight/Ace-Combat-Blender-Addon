@@ -16,11 +16,14 @@ from .Blender import*
 
 def build_mnt(data):
 
-    ndxr_index = 0
+    index = 0
 
     for mnt in data.mnt_list:
 
         if mnt != None:
+
+            ndxr = data.ndxr_list[index]
+            mop2 = data.mop2_list[index]
 
             bone_mapping = []
 
@@ -57,10 +60,19 @@ def build_mnt(data):
 
             for node in mnt.nodes:
 
+                translation = (0, 0, 0)
+                quaternion = Quaternion((1, 0, 0, 0))
+
+                if mop2 != None:
+
+                    if "basepose" in mop2.kfm1_dict:
+                        translation = mop2.kfm1_dict["basepose"].translations[name_index]
+                        quaternion = mop2.kfm1_dict["basepose"].quaternions[name_index]
+
                 if node.index == 0:
-                    empty = add_empty(mnt.names[name_index], ob)
+                    empty = add_empty(mnt.names[name_index], ob, translation, quaternion.to_euler())
                 else:
-                    empty = add_empty(mnt.names[name_index])
+                    empty = add_empty(mnt.names[name_index], empty_location=translation, empty_rotation=quaternion.to_euler())
 
                 if node.parent_index != -1:
 
@@ -70,11 +82,11 @@ def build_mnt(data):
 
                 name_index += 1
             
-            if ndxr_index < len(data.ndxr_list) and data.ndxr_list[ndxr_index] != None:
+            if index < len(data.ndxr_list) and data.ndxr_list[index] != None:
 
-                build_ndxr(data.ndxr_list[ndxr_index], empty_list, ob)
+                build_ndxr(data.ndxr_list[index], empty_list, ob)
 
-        ndxr_index += 1
+        index += 1
         
 
     """"
