@@ -63,9 +63,16 @@ class FHM:
                     ndxr = NDXR()
                     ndxr.read(br)
 
-                    #self.ndxr_list.append(ndxr)
-
                     self.list.append(ndxr)
+
+                elif subheader == "NDP3":
+
+                    print(str(index) + " " + subheader + " : " + str(br.tell()))
+
+                    ndp3 = NDXR()
+                    ndp3.read(br, ">")
+
+                    self.list.append(ndp3)
 
                 elif subheader == "MNT":
 
@@ -73,8 +80,6 @@ class FHM:
 
                     mnt = MNT()
                     mnt.read(br)
-
-                    #self.mnt_list.append(mnt)
 
                     self.list.append(mnt)
 
@@ -84,8 +89,6 @@ class FHM:
 
                     mop2 = MOP2()
                     mop2.read(br)
-
-                    #self.mop2_list.append(mop2)
 
                     self.list.append(mop2)
 

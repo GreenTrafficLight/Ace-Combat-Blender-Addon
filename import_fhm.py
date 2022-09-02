@@ -9,6 +9,7 @@ import os
 import struct
 
 from math import *
+from mathutils import *
 
 from .fhm import *
 from .Utilities import *
@@ -39,6 +40,15 @@ def build_mnt(data):
 
             for node in mnt.nodes:
 
+                translation = (0, 0, 0)
+                quaternion = Quaternion((1, 0, 0, 0))
+
+                if mop2 != None:
+
+                    if "basepose" in mop2.kfm1_dict and name_index < len(mop2.kfm1_dict["basepose"].translations) and name_index < len(mop2.kfm1_dict["basepose"].quaternions):
+                        translation = mop2.kfm1_dict["basepose"].translations[name_index]
+                        quaternion = mop2.kfm1_dict["basepose"].quaternions[name_index]
+
                 bone_mapping.append(mnt.names[name_index])
 
                 bpy.ops.object.mode_set(mode='EDIT', toggle=False)
@@ -46,11 +56,31 @@ def build_mnt(data):
 
                 bone.tail = (0, 0, 1)
 
+                #mat = quaternion.to_matrix().to_4x4()
+                #mat = Matrix.Translation(translation) @ mat
+                #bone.matrix = mat
+
                 if node.parent_index != -1:
 
-                    bone.parent = amt.edit_bones[mnt.names[node.parent_index]]
+                    parent = mnt.names[node.parent_index]
+
+                    bone.parent = amt.edit_bones[parent]
+                    #bone.matrix = amt.edit_bones[parent].matrix @ bone.matrix
+
+                    #bone.head = translation
 
                 name_index += 1
+
+            """
+            bones = amt.edit_bones
+            for node in mnt.nodes:
+
+                if node.parent_index != -1:
+
+                    parent = mnt.names[node.parent_index]
+                    
+                    bone.tail = bones[parent].head
+            """
 
             bpy.ops.object.mode_set(mode='OBJECT')
 
@@ -65,7 +95,7 @@ def build_mnt(data):
 
                 if mop2 != None:
 
-                    if "basepose" in mop2.kfm1_dict:
+                    if "basepose" in mop2.kfm1_dict and name_index < len(mop2.kfm1_dict["basepose"].translations) and name_index < len(mop2.kfm1_dict["basepose"].quaternions):
                         translation = mop2.kfm1_dict["basepose"].translations[name_index]
                         quaternion = mop2.kfm1_dict["basepose"].quaternions[name_index]
 
@@ -142,7 +172,17 @@ def build_ndxr(data, empty_list, ob):
                     facesList.append([face, [vertexList[faces[j][0] + last_vertex_count], vertexList[faces[j][1] + last_vertex_count], vertexList[faces[j][2]] + last_vertex_count]])
                 except:
                     pass
-            
+
+            if submesh.vertices["uvs"] != []:
+
+                uv_name = "UV1Map"
+                uv_layer1 = bm.loops.layers.uv.get(uv_name) or bm.loops.layers.uv.new(uv_name)
+
+                for f in bm.faces:
+                    for l in f.loops:
+                        if l.vert.index >= last_vertex_count:
+                            l[uv_layer1].uv = [submesh.vertices["uvs"][l.vert.index - last_vertex_count][0], 1 - submesh.vertices["uvs"][l.vert.index - last_vertex_count][1]]
+                   
             bm.to_mesh(mesh)
             bm.free()
 
@@ -164,7 +204,10 @@ def build_ndxr(data, empty_list, ob):
             mesh.use_auto_smooth = True
 
             if normals != []:
-                mesh.normals_split_custom_set_from_vertices(normals)
+                try:
+                    mesh.normals_split_custom_set_from_vertices(normals)
+                except:
+                    pass
 
             last_vertex_count += len(submesh.vertices["positions"])
 

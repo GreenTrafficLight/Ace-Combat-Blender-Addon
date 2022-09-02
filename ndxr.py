@@ -14,7 +14,9 @@ class NDXR:
 
         self.submeshes_count = 0
 
-    def read(self, br):
+    def read(self, br, endian="<"):
+
+        br.endian = endian
 
         NDXR_position = br.tell() - 4
         NDXR_size = br.readUInt()
@@ -101,6 +103,8 @@ class NDXR:
                 mesh.subMeshes.append(polygon)
                 self.submeshes_count += 1
 
+                poly_data.materials = self.readMaterials(br, NDXR_position, poly_data, name_start)
+
                 br.seek(temp)
 
     def readVertex(self, br, NDXR_position, poly_data, object_data):
@@ -180,17 +184,12 @@ class NDXR:
 
                     vertices["colors"].append([br.readByte(), br.readByte(), br.readByte(), br.readByte()])
 
-                """
-                uvChannelCount = poly_data.UVSize >> 4
-                for j in range(uvChannelCount):
-                    vertices["uvs"].append([br.readHalfFloat(), br.readHalfFloat()])
-                """
+
                 if (poly_data.UVSize == 16):
-                    for j in range(1):
-                        vertices["uvs"].append([br.readHalfFloat(), br.readHalfFloat()])
+                    vertices["uvs"].append([br.readHalfFloat(), br.readHalfFloat()])
+                
                 elif (poly_data.UVSize == 17):
-                    for j in range(2):
-                        vertices["uvs"].append([br.readHalfFloat(), br.readHalfFloat()])                
+                    vertices["uvs"].append([br.readFloat(), br.readFloat()])                  
 
             if (boneType == 0x10):
 
@@ -245,13 +244,73 @@ class NDXR:
 
         return vertices
 
-    def readMaterials(self, br, NDXR_position, poly_data, object_data):
+    def readMaterials(self, br, NDXR_position, poly_data, nameOffset):
 
         propoff = poly_data.texprop1
+        materials = []
 
         while propoff != 0:
 
-            br.seek(propoff + NDXR_position)
+            br.seek(propoff + NDXR_position, 0)
+
+            material = NDXR.MATERIAL()
+            materials.append(material)
+
+            material.flags = br.readUInt()
+            br.seek(4, 1)
+            material.srcFactor = br.readUShort()
+            texCount = br.readUShort()
+            material.dstFactor = br.readUShort()
+            material.alphaTest = br.readByte()
+            material.alphaFunction = br.readByte()
+
+            material.refAlpha = br.readUShort()
+            material.cullMode = br.readUShort()
+            br.seek(4, 1)
+            material.unk2 = br.readInt()
+            material.zBufferOffset = br.readInt()
+
+            for i in range(texCount):
+
+                texture = NDXR.MATERIAL.TEXTURE()
+                texture.hash = str(binascii.hexlify(br.readBytes(4)), "ascii")
+                br.seek(6, 1)
+                texture.mapMode = br.readUShort()
+                texture.wrapModeS = br.readByte()
+                texture.wrapModeT = br.readByte()
+                texture.minFilter = br.readByte()
+                texture.magFilter = br.readByte()
+                texture.mipDetail = br.readByte()
+                texture.unknown = br.readByte()
+                br.seek(4, 1)
+                texture.unknown2 = br.readShort()
+                material.textures.append(texture)
+
+            matAttSize = -1
+
+            while True:
+
+                pos = br.tell()
+                matAttSize = br.readInt()
+                if matAttSize == 0:
+                    break
+                nameStart = br.readInt()
+                br.seek(3, 1)
+                valueCount = br.readByte()
+                br.seek(4, 1)
+
+                br.seek(nameOffset + nameStart + NDXR_position, 0)
+                name = br.readString()
+
+
+            if (propoff == poly_data.texprop1):
+                propoff = poly_data.texprop2
+            elif (propoff == poly_data.texprop2):
+                    propoff = poly_data.texprop3
+            elif (propoff == poly_data.texprop3):
+                propoff = poly_data.texprop4
+
+        return materials
 
     class OBJECT_DATA :
 
@@ -330,4 +389,20 @@ class NDXR:
             self.useVertexColor = False
 
             self.useReflectionColor = False
+
+            self.textures = []
+
+        class TEXTURE :
+
+            def __init__(self) -> None:
+                
+                self.hash = None
+                self.mapMode = 0
+                self.wrapModeS = 1
+                self.wrapModeT = 1
+                self.minFilter = 3
+                self.magFilter = 2
+                self.mipDetail = 6
+                self.unknown = 0
+                self.unknown2 = 0
 
