@@ -87,36 +87,6 @@ def build_mnt(data):
                 build_ndxr(data.ndxr_list[index], empty_list, ob)
 
         index += 1
-        
-
-    """"
-    for mnt in data.mnt_list:
-
-        empty_list = []
-
-        name_index = 0
-
-        for node in mnt.nodes:
-
-            if node.index == 0:
-                empty = add_empty(mnt.names[name_index], empty_rotation=( radians(90), 0, 0 ))
-            else:
-                empty = add_empty(mnt.names[name_index])
-
-            if node.parent_index != -1:
-
-                empty.parent = empty_list[node.parent_index]
-
-            empty_list.append(empty)
-
-            name_index += 1
-
-        if index < len(data.ndxr_list):
-
-            build_ndxr(data.ndxr_list[index], empty_list)
-
-        index += 1
-    """
 
 def build_ndxr(data, empty_list, ob):
 
