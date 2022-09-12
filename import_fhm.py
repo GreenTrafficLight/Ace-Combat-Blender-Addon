@@ -15,14 +15,14 @@ from .Blender import*
 
 def build_mnt(data):
 
-    index = 0
+    nd_index = 0
+    mop2_index = 0
 
     for mnt in data.mnt_list:
 
         if mnt != None:
 
-            nd = data.nd_list[index]
-            mop2 = data.mop2_list[index]
+            mop2 = data.mop2_list[mop2_index][0]
 
             bone_mapping = []
 
@@ -31,12 +31,12 @@ def build_mnt(data):
             bpy.ops.object.add(type="ARMATURE")
             ob = bpy.context.object
             ob.rotation_euler = ( radians(90), 0, 0 )
-            ob.name = mnt.names[name_index]
+            ob.name = mnt[0].names[name_index]
 
             amt = ob.data
-            amt.name = mnt.names[name_index]
+            amt.name = mnt[0].names[name_index]
 
-            for node in mnt.nodes:
+            for node in mnt[0].nodes:
 
                 translation = (0, 0, 0)
                 quaternion = Quaternion((1, 0, 0, 0))
@@ -47,10 +47,10 @@ def build_mnt(data):
                         translation = mop2.kfm1_dict["basepose"].translations[name_index]
                         quaternion = mop2.kfm1_dict["basepose"].quaternions[name_index]
 
-                bone_mapping.append(mnt.names[name_index])
+                bone_mapping.append(mnt[0].names[name_index])
 
                 bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-                bone = amt.edit_bones.new(mnt.names[name_index])
+                bone = amt.edit_bones.new(mnt[0].names[name_index])
 
                 bone.tail = (0, 0, 1)
 
@@ -60,7 +60,7 @@ def build_mnt(data):
 
                 if node.parent_index != -1:
 
-                    parent = mnt.names[node.parent_index]
+                    parent = mnt[0].names[node.parent_index]
 
                     bone.parent = amt.edit_bones[parent]
                     #bone.matrix = amt.edit_bones[parent].matrix @ bone.matrix
@@ -86,7 +86,7 @@ def build_mnt(data):
 
             name_index = 0
 
-            for node in mnt.nodes:
+            for node in mnt[0].nodes:
 
                 translation = (0, 0, 0)
                 quaternion = Quaternion((1, 0, 0, 0))
@@ -101,9 +101,9 @@ def build_mnt(data):
                         print("test")
 
                 if node.index == 0:
-                    empty = add_empty(mnt.names[name_index], ob, translation, quaternion.to_euler())
+                    empty = add_empty(mnt[0].names[name_index], ob, translation, quaternion.to_euler())
                 else:
-                    empty = add_empty(mnt.names[name_index], empty_location=translation, empty_rotation=quaternion.to_euler())
+                    empty = add_empty(mnt[0].names[name_index], empty_location=translation, empty_rotation=quaternion.to_euler())
 
                 if node.parent_index != -1:
 
@@ -113,11 +113,34 @@ def build_mnt(data):
 
                 name_index += 1
             
-            if index < len(data.nd_list) and nd != None:
+            if nd_index < len(data.nd_list):
 
-                build_ndxr(nd, empty_list, ob)
+                if mnt[1] == 0x41 or mnt[1] == 0x46:
 
-        index += 1
+                    for i in range(4):
+
+                        nd = data.nd_list[nd_index][0]
+
+                        if nd != None:
+
+                            build_ndxr(nd, empty_list, ob)
+
+                        nd_index += 1
+
+                else:
+
+                    nd = data.nd_list[nd_index][0]
+
+                    if nd != None:
+
+                        build_ndxr(nd, empty_list, ob)
+
+                    nd_index += 1
+                    mop2_index += 1
+
+        else:
+            nd_index += 1
+            mop2_index += 1
 
 def build_ndxr(data, empty_list = [], ob = None, mnt_list_is_empty = False, empty = None):
 
@@ -231,6 +254,7 @@ def build_ndxr(data, empty_list = [], ob = None, mnt_list_is_empty = False, empt
 def build_memory_dump(memory_dump, filename):
 
         if memory_dump.mnt_list != []:
+            
             build_mnt(memory_dump)
 
         elif memory_dump.nd_list != [] and memory_dump.mnt_list == []:
@@ -244,7 +268,7 @@ def build_memory_dump(memory_dump, filename):
                 
                 empty = add_empty(str(i), ob)
 
-                build_ndxr(memory_dump.nd_list[i], mnt_list_is_empty=True, empty = empty)
+                build_ndxr(memory_dump.nd_list[i][0], mnt_list_is_empty=True, empty = empty)
 
 def build_fhm(data, filename):
 
@@ -257,7 +281,6 @@ def build_fhm(data, filename):
 def main(filepath, clear_scene):
     if clear_scene:
         clearScene()
-
 
     file = open(filepath, 'rb')
     filename =  filepath.split("\\")[-1]

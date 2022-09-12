@@ -42,7 +42,7 @@ class MEMORY_DUMP:
 
                 br.seek(save_addr + ndp3.size, 0)
 
-                self.nd_list.append(ndp3)
+                self.nd_list.append((ndp3, 0x1))
 
                 subheader = ""
             
@@ -57,7 +57,7 @@ class MEMORY_DUMP:
 
                 br.seek(save_addr + ndxr.size, 0)
 
-                self.nd_list.append(ndxr)
+                self.nd_list.append((ndxr, 0x1))
 
                 subheader = ""      
 
@@ -72,7 +72,7 @@ class MEMORY_DUMP:
 
                 br.seek(save_addr + mnt.size, 0)
 
-                self.mnt_list.append(mnt)
+                self.mnt_list.append((mnt, 0x3))
 
                 subheader = ""
 
@@ -85,11 +85,10 @@ class MEMORY_DUMP:
 
                 br.seek(save_addr + mop2.size, 0)
 
-                self.mop2_list.append(mop2)
+                self.mop2_list.append((mop2, 0x4))
 
                 subheader = ""
                 
-
             elif subheader == "MATE":
 
                 break
