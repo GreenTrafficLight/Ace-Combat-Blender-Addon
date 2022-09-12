@@ -1,6 +1,3 @@
-from distutils.command.build import build
-from msilib.schema import Binary
-from operator import add
 import bpy
 import bmesh
 
@@ -12,6 +9,7 @@ from math import *
 from mathutils import *
 
 from .fhm import *
+from .memory_dump import *
 from .Utilities import *
 from .Blender import*
 
@@ -23,7 +21,7 @@ def build_mnt(data):
 
         if mnt != None:
 
-            ndxr = data.ndxr_list[index]
+            nd = data.nd_list[index]
             mop2 = data.mop2_list[index]
 
             bone_mapping = []
@@ -99,6 +97,9 @@ def build_mnt(data):
                         translation = mop2.kfm1_dict["basepose"].translations[name_index]
                         quaternion = mop2.kfm1_dict["basepose"].quaternions[name_index]
 
+                    else:
+                        print("test")
+
                 if node.index == 0:
                     empty = add_empty(mnt.names[name_index], ob, translation, quaternion.to_euler())
                 else:
@@ -112,28 +113,34 @@ def build_mnt(data):
 
                 name_index += 1
             
-            if index < len(data.ndxr_list) and data.ndxr_list[index] != None:
+            if index < len(data.nd_list) and nd != None:
 
-                build_ndxr(data.ndxr_list[index], empty_list, ob)
+                build_ndxr(nd, empty_list, ob)
 
         index += 1
 
-def build_ndxr(data, empty_list, ob):
+def build_ndxr(data, empty_list = [], ob = None, mnt_list_is_empty = False, empty = None):
 
     for ndxr_mesh in data.meshes :
 
         mesh = bpy.data.meshes.new(ndxr_mesh.text)
         obj = bpy.data.objects.new(ndxr_mesh.text, mesh)
 
-        if ndxr_mesh.singlebind != -1:
+        if not mnt_list_is_empty:
 
-            empty = empty_list[ndxr_mesh.singlebind]
+            if ndxr_mesh.singlebind != -1:
 
-            empty.users_collection[0].objects.link(obj)
+                empty = empty_list[ndxr_mesh.singlebind]
+
+                empty.users_collection[0].objects.link(obj)
+
+            else:
+
+                empty = add_empty(ndxr_mesh.text, ob)
+
+                empty.users_collection[0].objects.link(obj)
 
         else:
-
-            empty = add_empty(ndxr_mesh.text, ob)
 
             empty.users_collection[0].objects.link(obj)
 
@@ -183,6 +190,16 @@ def build_ndxr(data, empty_list, ob):
                         if l.vert.index >= last_vertex_count:
                             l[uv_layer1].uv = [submesh.vertices["uvs"][l.vert.index - last_vertex_count][0], 1 - submesh.vertices["uvs"][l.vert.index - last_vertex_count][1]]
                    
+            if submesh.vertices["uvs2"] != []:
+
+                uv_name = "UV2Map"
+                uv_layer2 = bm.loops.layers.uv.get(uv_name) or bm.loops.layers.uv.new(uv_name)
+
+                for f in bm.faces:
+                    for l in f.loops:
+                        if l.vert.index >= last_vertex_count:
+                            l[uv_layer2].uv = [submesh.vertices["uvs2"][l.vert.index - last_vertex_count][0], 1 - submesh.vertices["uvs2"][l.vert.index - last_vertex_count][1]]
+
             bm.to_mesh(mesh)
             bm.free()
 
@@ -211,6 +228,24 @@ def build_ndxr(data, empty_list, ob):
 
             last_vertex_count += len(submesh.vertices["positions"])
 
+def build_memory_dump(memory_dump, filename):
+
+        if memory_dump.mnt_list != []:
+            build_mnt(memory_dump)
+
+        elif memory_dump.nd_list != [] and memory_dump.mnt_list == []:
+
+            bpy.ops.object.add(type="ARMATURE")
+            ob = bpy.context.object
+            ob.rotation_euler = ( radians(90), 0, 0 )
+            ob.name = filename
+
+            for i in range (len(memory_dump.nd_list)):
+                
+                empty = add_empty(str(i), ob)
+
+                build_ndxr(memory_dump.nd_list[i], mnt_list_is_empty=True, empty = empty)
+
 def build_fhm(data, filename):
 
     #currentCollection = bpy.context.view_layer.active_layer_collection.collection
@@ -226,12 +261,37 @@ def main(filepath, clear_scene):
 
     file = open(filepath, 'rb')
     filename =  filepath.split("\\")[-1]
-    
+    file_extension =  os.path.splitext(filepath)[1]
+    file_size = os.path.getsize(filepath)
+
     br = BinaryReader(file, "<")
 
-    fhm = FHM()
-    fhm.read(br)
+    data = br.readBytes(file_size)
+    br.seek(0, 0)
 
-    build_fhm(fhm, os.path.splitext(filename)[0])
+    if file_extension == ".fhm":
+        
+        fhm = FHM()
+        fhm.read(br)
+
+        build_fhm(fhm, os.path.splitext(filename)[0])
+    
+    elif file_extension == ".ndp3":
+
+        memory_dump = MEMORY_DUMP()
+        memory_dump.read(br, file_size)
+
+        build_memory_dump(memory_dump, os.path.splitext(filename)[0])
+        
+    elif file_extension == ".ndxr":
+
+        memory_dump = MEMORY_DUMP()
+        memory_dump.read(br, file_size)
+
+        build_memory_dump(memory_dump, os.path.splitext(filename)[0])
+
+
+
+   
 
     

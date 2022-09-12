@@ -1,9 +1,9 @@
-from re import sub
 from .Utilities import *
 
 from .ndxr import *
 from .mnt import *
 from .mop2 import *
+from .colh import *
 
 class FHM:
 
@@ -14,7 +14,7 @@ class FHM:
 
         self.list = []
         
-        self.ndxr_list = []
+        self.nd_list = []
         self.mnt_list = []
         self.mop2_list = []
         self.mate_list = []
@@ -152,7 +152,7 @@ class FHM:
             end_entry = FHM.END_ENTRY()
             end_entry.read(br)
             if end_entry.type == 1: # NDXR
-                self.ndxr_list.append(self.list[i])
+                self.nd_list.append(self.list[i])
             elif end_entry.type == 3: # MNT
                 self.mnt_list.append(self.list[i])
             elif end_entry.type == 4: # MOP2
@@ -160,6 +160,15 @@ class FHM:
             elif end_entry.type == 5: # MATE
                 self.mate_list.append(self.list[i])
             
+            elif end_entry.type == 0x41: # MNT ?
+                self.mnt_list.append(self.list[i])
+            elif end_entry.type == 0x46: # MNT ?
+                self.mnt_list.append(self.list[i])
+
+            elif end_entry.type == 0x42: # MOP2 ?
+                self.mop2_list.append(self.list[i])           
+            elif end_entry.type == 0x43: # MOP2 ?
+                self.mop2_list.append(self.list[i])             
 
     class TABLE_OFFSET_ENTRY:
 

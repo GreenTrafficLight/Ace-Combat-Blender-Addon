@@ -7,6 +7,8 @@ from .Utilities import *
 class NDXR:
     def __init__(self):
 
+        self.size = 0
+
         self.mesh_informations = []
         self.boneFlags = []
 
@@ -14,12 +16,12 @@ class NDXR:
 
         self.submeshes_count = 0
 
-    def read(self, br, endian="<"):
+    def read(self, br, endian="<", memory_dump = False, addr_off = 0):
 
         br.endian = endian
 
         NDXR_position = br.tell() - 4
-        NDXR_size = br.readUInt()
+        self.size = br.readUInt()
 
         version = br.readUShort()
         
@@ -47,7 +49,11 @@ class NDXR:
 
             boundingSphere = (br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat())
             temp = br.tell() + 4
-            br.seek(name_start + br.readUInt() + NDXR_position)
+            name_offset = br.readUInt()
+            if name_offset > self.size:
+                br.seek(name_offset - addr_off)
+            else:
+                br.seek(name_start + name_offset + NDXR_position)
             obj.name = br.readString()
 
             br.seek(temp, 0)
@@ -92,7 +98,7 @@ class NDXR:
                 temp = br.tell()
 
                 polygon = NDXR.POLYGON() 
-                polygon.vertices = self.readVertex(br, NDXR_position, poly_data, obj)
+                polygon.vertices = self.readVertex(br, NDXR_position, poly_data, obj, memory_dump)
 
                 br.seek(poly_data.polyStart + NDXR_position, 0)
 
@@ -103,11 +109,11 @@ class NDXR:
                 mesh.subMeshes.append(polygon)
                 self.submeshes_count += 1
 
-                poly_data.materials = self.readMaterials(br, NDXR_position, poly_data, name_start)
+                #poly_data.materials = self.readMaterials(br, NDXR_position, poly_data, name_start, addr_off)
 
                 br.seek(temp)
 
-    def readVertex(self, br, NDXR_position, poly_data, object_data):
+    def readVertex(self, br, NDXR_position, poly_data, object_data, memory_dump = False):
 
         boneType = poly_data.vertSize & 0xF0
         vertexType = poly_data.vertSize & 0xF
@@ -119,6 +125,7 @@ class NDXR:
             "tans" : [],
             "colors" : [],
             "uvs" : [],
+            "uvs2" : [],
             "boneIds" : [],
             "boneWeights" : []
         }
@@ -165,14 +172,26 @@ class NDXR:
                 vertices["tans"].append([br.readFloat(), br.readFloat(), br.readFloat(), br.readFloat()])
                 
             elif (vertexType == 0x6):
-
-                vertices["normals"].append([br.readHalfFloat(), br.readHalfFloat(), br.readHalfFloat()])
-                br.readBytes(2)
+                
+                if (memory_dump == True):
+                    br.readBytes(8)
+                else:
+                    #vertices["normals"].append([br.readHalfFloat(), br.readHalfFloat(), br.readHalfFloat()])
+                    normals = [br.readHalfFloat(), br.readHalfFloat(), br.readHalfFloat()]
+                    scalar = br.readHalfFloat()
+                    vertices["normals"].append([i * scalar for i in normals])
+                #br.readHalfFloat()
 
             elif (vertexType == 0x7):
 
-                vertices["normals"].append([br.readHalfFloat(), br.readHalfFloat(), br.readHalfFloat()])
-                br.readBytes(2)
+                if (memory_dump == True):
+                    br.readBytes(8)
+                else:
+                    #vertices["normals"].append([br.readHalfFloat(), br.readHalfFloat(), br.readHalfFloat()])
+                    normals = [br.readHalfFloat(), br.readHalfFloat(), br.readHalfFloat()]
+                    scalar = br.readHalfFloat()
+                    vertices["normals"].append([i * scalar for i in normals])
+                    #br.readHalfFloat()
                 vertices["bitans"].append([br.readHalfFloat(), br.readHalfFloat(), br.readHalfFloat(), br.readHalfFloat()])
                 vertices["tans"].append([br.readHalfFloat(), br.readHalfFloat(), br.readHalfFloat(), br.readHalfFloat()])
 
@@ -180,16 +199,25 @@ class NDXR:
 
             if (boneType == 0x0):
 
-                if (poly_data.UVSize >= 18):
+                if (poly_data.UVSize >= 18 and poly_data.UVSize <= 32):
 
                     vertices["colors"].append([br.readByte(), br.readByte(), br.readByte(), br.readByte()])
 
+                # UV Data
 
                 if (poly_data.UVSize == 16):
                     vertices["uvs"].append([br.readHalfFloat(), br.readHalfFloat()])
                 
                 elif (poly_data.UVSize == 17):
-                    vertices["uvs"].append([br.readFloat(), br.readFloat()])                  
+                    vertices["uvs"].append([br.readFloat(), br.readFloat()])    
+
+                elif (poly_data.UVSize == 19):
+                    vertices["uvs"].append([br.readFloat(), br.readFloat()])   
+
+                elif (poly_data.UVSize == 33):
+                    vertices["uvs"].append([br.readFloat(), br.readFloat()])
+                    vertices["uvs2"].append([br.readFloat(), br.readFloat()])
+                    
 
             if (boneType == 0x10):
 
@@ -244,14 +272,17 @@ class NDXR:
 
         return vertices
 
-    def readMaterials(self, br, NDXR_position, poly_data, nameOffset):
+    def readMaterials(self, br, NDXR_position, poly_data, nameOffset, addr_off = 0):
 
         propoff = poly_data.texprop1
         materials = []
 
         while propoff != 0:
-
-            br.seek(propoff + NDXR_position, 0)
+            
+            if propoff > self.size:
+                br.seek(propoff - addr_off)
+            else:
+                br.seek(propoff + NDXR_position, 0)
 
             material = NDXR.MATERIAL()
             materials.append(material)

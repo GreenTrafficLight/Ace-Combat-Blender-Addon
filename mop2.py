@@ -106,6 +106,9 @@ class MOP2: # Animation Data
             self.name = br.readString()
 
     def __init__(self) -> None:
+
+        self.size = 0
+        self.size2 = 0
         
         self.kfm1_dict = {}
 
@@ -115,8 +118,8 @@ class MOP2: # Animation Data
         self.unk1 = br.readUShort()
         self.unk2 = br.readUShort()
         
-        mop2_size = br.readUInt()
-        mop2_size2 = br.readUInt() # ?
+        self.size = br.readUInt()
+        self.size2 = br.readUInt() # ?
 
         count = br.readUInt() # count ?
 

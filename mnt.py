@@ -28,6 +28,8 @@ class MNT: # Armature Data
 
     def __init__(self):
 
+        self.size = 0
+
         self.unk1 = 0
 
         self.hashes = []
@@ -40,12 +42,12 @@ class MNT: # Armature Data
 
         MNT_position = br.tell() - 4
         self.unk1 = br.readUInt()
-        MNT_size = br.readUInt()
+        self.size = br.readUInt()
 
-        count = br.readUInt()
+        count = br.readUShort()
 
-        self.unk1 = br.readUInt()
-
+        self.unk1 = br.readUShort()
+        self.unk2 = br.readUInt()
         self.unk3 = str(binascii.hexlify(br.readBytes(4)), "ascii")
 
         hashes_offset = br.readUInt()
