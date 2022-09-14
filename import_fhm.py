@@ -9,7 +9,9 @@ from math import *
 from mathutils import *
 
 from .fhm import *
+from .fhm_ac6 import *
 from .memory_dump import *
+
 from .Utilities import *
 from .Blender import*
 
@@ -20,9 +22,12 @@ def build_mnt(data):
 
     for mnt in data.mnt_list:
 
-        if mnt != None:
+        if mnt[0] != None:
 
-            mop2 = data.mop2_list[mop2_index][0]
+            try:
+                mop2 = data.mop2_list[mop2_index][0]
+            except:
+                mop2 = None
 
             bone_mapping = []
 
@@ -36,6 +41,9 @@ def build_mnt(data):
             amt = ob.data
             amt.name = mnt[0].names[name_index]
 
+            # Add bones
+
+            """
             for node in mnt[0].nodes:
 
                 translation = (0, 0, 0)
@@ -52,35 +60,42 @@ def build_mnt(data):
                 bpy.ops.object.mode_set(mode='EDIT', toggle=False)
                 bone = amt.edit_bones.new(mnt[0].names[name_index])
 
-                bone.tail = (0, 0, 1)
+                bone.head = (0.1 , 0.1, 0.1)
 
-                #mat = quaternion.to_matrix().to_4x4()
-                #mat = Matrix.Translation(translation) @ mat
-                #bone.matrix = mat
+                mat = quaternion.to_matrix().to_4x4()
+                mat = Matrix.Translation(translation) @ mat
+                bone.matrix = mat
 
                 if node.parent_index != -1:
 
                     parent = mnt[0].names[node.parent_index]
 
                     bone.parent = amt.edit_bones[parent]
-                    #bone.matrix = amt.edit_bones[parent].matrix @ bone.matrix
+                    bone.matrix = amt.edit_bones[parent].matrix @ bone.matrix
 
-                    #bone.head = translation
+                    bone.tail = bone.matrix.translation
 
                 name_index += 1
 
-            """
+            name_index = 0
+
             bones = amt.edit_bones
-            for node in mnt.nodes:
+            for node in mnt[0].nodes:
+
+                bone = bones[mnt[0].names[name_index]]
 
                 if node.parent_index != -1:
 
-                    parent = mnt.names[node.parent_index]
+                    parent = mnt[0].names[node.parent_index]
                     
-                    bone.tail = bones[parent].head
+                    bone.head = bones[parent].tail
+            
+                name_index += 1
             """
 
             bpy.ops.object.mode_set(mode='OBJECT')
+
+            # Add empty
 
             empty_list = []
 
@@ -112,8 +127,12 @@ def build_mnt(data):
                 empty_list.append(empty)
 
                 name_index += 1
+
+            # Build ND
             
             if nd_index < len(data.nd_list):
+
+                # For o_/d_ models
 
                 if mnt[1] == 0x41 or mnt[1] == 0x46:
 
@@ -123,7 +142,7 @@ def build_mnt(data):
 
                         if nd != None:
 
-                            build_ndxr(nd, empty_list, ob)
+                            build_nd(nd, empty_list, ob, bone_mapping)
 
                         nd_index += 1
 
@@ -133,7 +152,7 @@ def build_mnt(data):
 
                     if nd != None:
 
-                        build_ndxr(nd, empty_list, ob)
+                        build_nd(nd, empty_list, ob, bone_mapping)
 
                     nd_index += 1
                     mop2_index += 1
@@ -142,24 +161,36 @@ def build_mnt(data):
             nd_index += 1
             mop2_index += 1
 
-def build_ndxr(data, empty_list = [], ob = None, mnt_list_is_empty = False, empty = None):
+    return nd_index
 
-    for ndxr_mesh in data.meshes :
+def build_nd(data, empty_list = [], ob = None, bone_mapping = None, mnt_list_is_empty = False, empty = None):
 
-        mesh = bpy.data.meshes.new(ndxr_mesh.text)
-        obj = bpy.data.objects.new(ndxr_mesh.text, mesh)
+    for nd_mesh in data.meshes :
+
+        mesh = bpy.data.meshes.new(nd_mesh.text)
+        obj = bpy.data.objects.new(nd_mesh.text, mesh)
+
+        """
+        if ob != None:
+
+            modifier = obj.modifiers.new(ob.name, type="ARMATURE")
+            modifier.object = bpy.data.objects[ob.name]
+        """
 
         if not mnt_list_is_empty:
 
-            if ndxr_mesh.singlebind != -1:
+            if nd_mesh.singlebind != -1:
 
-                empty = empty_list[ndxr_mesh.singlebind]
+                try:
+                    empty = empty_list[nd_mesh.singlebind]
+                except:
+                    empty = add_empty(nd_mesh.text, ob)
 
                 empty.users_collection[0].objects.link(obj)
 
             else:
 
-                empty = add_empty(ndxr_mesh.text, ob)
+                empty = add_empty(nd_mesh.text, ob)
 
                 empty.users_collection[0].objects.link(obj)
 
@@ -175,7 +206,7 @@ def build_ndxr(data, empty_list = [], ob = None, mnt_list_is_empty = False, empt
 
         last_vertex_count = 0
 
-        for submesh in ndxr_mesh.subMeshes :
+        for submesh in nd_mesh.subMeshes :
 
             bm = bmesh.new()
             bm.from_mesh(mesh)
@@ -227,18 +258,20 @@ def build_ndxr(data, empty_list = [], ob = None, mnt_list_is_empty = False, empt
             bm.free()
 
             """
-            for i in range(len(submesh.vertices["boneIndices"])):
-                if submesh.vertices["boneIndices"] != []:
-                    for k, vg in enumerate(submesh.vertices["boneIndices"][i]):
+            if bone_mapping != []:
+                for i in range(len(submesh.vertices["boneIds"])):
+                    if submesh.vertices["boneIds"] != []:
+                        vg = submesh.vertices["boneIds"][i]
                         vg_name = bone_mapping[vg + 1]
                         if not vg_name in obj.vertex_groups:
                             group = obj.vertex_groups.new(name=vg_name)
                         else:
                             group = obj.vertex_groups[vg_name]
-                        weight = submesh.vertices["boneWeights"][i][k]
+                        weight = submesh.vertices["boneWeights"][i]
                         if weight > 0.0:
                             group.add([i], weight, 'REPLACE')
             """
+            
             
             # Set normals
             mesh.use_auto_smooth = True
@@ -255,7 +288,22 @@ def build_memory_dump(memory_dump, filename):
 
         if memory_dump.mnt_list != []:
             
-            build_mnt(memory_dump)
+            nd_index = build_mnt(memory_dump)
+
+            if nd_index < len(memory_dump.nd_list):
+
+                bpy.ops.object.add(type="ARMATURE")
+                ob = bpy.context.object
+                ob.rotation_euler = ( radians(90), 0, 0 )
+                ob.name = filename + "_remaining_nd"
+
+                # Build ND that doesn't have MNT
+
+                for i in range(nd_index, len(memory_dump.nd_list)):
+
+                    empty = add_empty(str(i), ob)
+
+                    build_nd(memory_dump.nd_list[i][0], mnt_list_is_empty=True, empty = empty)
 
         elif memory_dump.nd_list != [] and memory_dump.mnt_list == []:
 
@@ -268,7 +316,7 @@ def build_memory_dump(memory_dump, filename):
                 
                 empty = add_empty(str(i), ob)
 
-                build_ndxr(memory_dump.nd_list[i][0], mnt_list_is_empty=True, empty = empty)
+                build_nd(memory_dump.nd_list[i][0], mnt_list_is_empty=True, empty = empty)
 
 def build_fhm(data, filename):
 
@@ -278,7 +326,7 @@ def build_fhm(data, filename):
 
     build_mnt(data)
 
-def main(filepath, clear_scene):
+def main(filepath, clear_scene, fhm_ac6, mnt_debug):
     if clear_scene:
         clearScene()
 
@@ -289,27 +337,31 @@ def main(filepath, clear_scene):
 
     br = BinaryReader(file, "<")
 
-    data = br.readBytes(file_size)
-    br.seek(0, 0)
-
     if file_extension == ".fhm":
-        
-        fhm = FHM()
-        fhm.read(br)
 
-        build_fhm(fhm, os.path.splitext(filename)[0])
+        if fhm_ac6:
+
+            fhm = FHM_AC6()
+            fhm.read(br)
+
+        else:
+        
+            fhm = FHM()
+            fhm.read(br)
+
+            build_fhm(fhm, os.path.splitext(filename)[0])
     
     elif file_extension == ".ndp3":
 
         memory_dump = MEMORY_DUMP()
-        memory_dump.read(br, file_size)
+        memory_dump.read(br, file_size, mnt_debug)
 
         build_memory_dump(memory_dump, os.path.splitext(filename)[0])
         
     elif file_extension == ".ndxr":
 
         memory_dump = MEMORY_DUMP()
-        memory_dump.read(br, file_size)
+        memory_dump.read(br, file_size, mnt_debug)
 
         build_memory_dump(memory_dump, os.path.splitext(filename)[0])
 
