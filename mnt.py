@@ -6,6 +6,17 @@ import binascii
 
 class MNT: # Armature Data
 
+    def __init__(self):
+
+        self.size = 0
+
+        self.unk1 = 0
+
+        self.hashes = []
+        self.hash_indices = []
+        self.parent_indices = []
+        self.nodes = []
+        self.names = []
 
     class NODE :
 
@@ -25,18 +36,6 @@ class MNT: # Armature Data
             self.parent_index = br.readShort()  # Parent index
             self.hash = str(binascii.hexlify(br.readBytes(4)), "ascii") # Hash
             br.readBytes(8) # ???
-
-    def __init__(self):
-
-        self.size = 0
-
-        self.unk1 = 0
-
-        self.hashes = []
-        self.hash_indices = []
-        self.parent_indices = []
-        self.nodes = []
-        self.names = []
 
     def read(self, br):
 
