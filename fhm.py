@@ -19,6 +19,42 @@ class FHM:
         self.mop2_list = []
         self.mate_list = []
 
+    class TABLE_OFFSET_ENTRY:
+
+        def __init__(self) -> None:
+            self.offset = 0
+
+        def read(self, br):
+
+            self.unk1 = br.readUInt()
+            self.offset = br.readUInt()
+
+    class TABLE_ENTRY:
+
+        def __init__(self) -> None:
+            self.offset = 0
+            self.size = 0
+
+        def read(self, br):
+            self.unk1 = br.readUShort()
+            self.unk2 = br.readUShort()
+            self.unk3 = br.readUInt()
+            self.offset = br.readUInt()
+            self.size = br.readUInt()
+    
+    class END_ENTRY:
+
+        def __init__(self) -> None:
+            self.type = 0
+            self.unk1 = 0
+
+        def read(self, br):
+
+            self.type = br.readUByte()
+            self.unk1 = br.readUByte()
+
+            br.seek(14, 1)
+
     def read(self, br):
 
         header = br.bytesToString(br.readBytes(4)).replace("\0", "")
@@ -170,39 +206,4 @@ class FHM:
             elif end_entry.type == 0x43: # MOP2 ?
                 self.mop2_list.append((self.list[i], 0x43))             
 
-    class TABLE_OFFSET_ENTRY:
-
-        def __init__(self) -> None:
-            self.offset = 0
-
-        def read(self, br):
-
-            self.unk1 = br.readUInt()
-            self.offset = br.readUInt()
-
-    class TABLE_ENTRY:
-
-        def __init__(self) -> None:
-            self.offset = 0
-            self.size = 0
-
-        def read(self, br):
-            self.unk1 = br.readUShort()
-            self.unk2 = br.readUShort()
-            self.unk3 = br.readUInt()
-            self.offset = br.readUInt()
-            self.size = br.readUInt()
-    
-    class END_ENTRY:
-
-        def __init__(self) -> None:
-            self.type = 0
-            self.unk1 = 0
-
-        def read(self, br):
-
-            self.type = br.readUByte()
-            self.unk1 = br.readUByte()
-
-            br.seek(14, 1)
 
