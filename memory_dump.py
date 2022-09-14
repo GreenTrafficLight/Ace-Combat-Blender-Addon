@@ -13,7 +13,7 @@ class MEMORY_DUMP:
         self.mnt_list = []
         self.mop2_list = []
 
-    def read(self, br, file_size):
+    def read(self, br, file_size, mnt_debug):
 
         br.endian = ">"
         
@@ -27,13 +27,17 @@ class MEMORY_DUMP:
 
         br.endian = "<"
 
+        if mnt_debug:
+
+            self.mnt_list = [(None, 0x3) for _ in range(11)]
+
         subheader = ""
 
         while br.tell() < file_size:
 
             subheader += br.bytesToString(br.readBytes(1)).replace("\0", "")
 
-            if subheader == "NDP3":
+            if "NDP3" in subheader:
 
                 save_addr = br.tell() - 4
 
@@ -46,7 +50,7 @@ class MEMORY_DUMP:
 
                 subheader = ""
             
-            elif subheader == "NDXR":
+            elif "NDXR" in subheader:
 
                 print(br.tell() - 4)
 
@@ -61,7 +65,7 @@ class MEMORY_DUMP:
 
                 subheader = ""      
 
-            elif subheader == "MNT":
+            elif "MNT" in subheader:
 
                 br.seek(1, 1)
 
@@ -72,11 +76,58 @@ class MEMORY_DUMP:
 
                 br.seek(save_addr + mnt.size, 0)
 
-                self.mnt_list.append((mnt, 0x3))
+                if mnt_debug:
+
+                    if "_body" in mnt.names[0]:
+                        self.mnt_list[0] = (mnt, 0x3)
+
+                    elif "_c1" in mnt.names[0]:
+                        self.mnt_list[1] = (mnt, 0x3)
+
+                    elif "_c2" in mnt.names[0]:
+                        self.mnt_list[2] = (mnt, 0x3)
+                    
+                    elif "BINE_BONE" in mnt.names[0]:
+                        
+                        if self.mnt_list[3] == (None, 0x3):
+                            self.mnt_list[3] = (mnt, 0x3)
+
+                        elif self.mnt_list[9] == (None, 0x3):
+                            self.mnt_list[9] = (mnt, 0x3)
+                    
+                    elif "_gear" in mnt.names[0]:
+                        self.mnt_list[4] = (mnt, 0x3)
+
+                    elif "_psel" in mnt.names[0]:
+                        self.mnt_list[5] = (mnt, 0x3)
+
+                    elif "_shbody" in mnt.names[0]:
+                        self.mnt_list[6] = (mnt, 0x3)
+
+                    elif "_shc1" in mnt.names[0]:
+                        self.mnt_list[7] = (mnt, 0x3)
+
+                    elif "_shc2" in mnt.names[0]:
+                        self.mnt_list[8] = (mnt, 0x3)
+
+                    elif "_shgear" in mnt.names[0]:
+                        self.mnt_list[10] = (mnt, 0x3)
+
+                    elif "_nozl" in mnt.names[0]:
+                        self.mnt_list[3] = (mnt, 0x3)
+
+                    elif "_shnozl" in mnt.names[0]:
+                        self.mnt_list[9] = (mnt, 0x3)
+
+                    else:
+                        self.mnt_list.append((mnt, 0x3))
+
+                else:
+                    self.mnt_list.append((mnt, 0x3))
 
                 subheader = ""
 
-            elif subheader == "MOP2":
+            elif "MOP2" in subheader:
 
                 save_addr = br.tell() - 4
 
@@ -89,7 +140,7 @@ class MEMORY_DUMP:
 
                 subheader = ""
                 
-            elif subheader == "MATE":
+            elif "MATE" in subheader:
 
                 break
 
@@ -113,3 +164,9 @@ class MEMORY_DUMP:
 
                 subheader = ""
       
+        for i in range(len(self.mnt_list)):
+
+            if self.mnt_list[i][0] == None:
+
+                self.nd_list.insert(i, (None, 0x1))
+                self.mop2_list.insert(i, (None, 0x4))
