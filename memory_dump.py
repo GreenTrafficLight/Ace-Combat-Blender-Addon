@@ -164,9 +164,11 @@ class MEMORY_DUMP:
 
                 subheader = ""
       
-        for i in range(len(self.mnt_list)):
+        if mnt_debug:
+            
+            for i in range(len(self.mnt_list)):
 
-            if self.mnt_list[i][0] == None:
+                if self.mnt_list[i][0] == None:
 
-                self.nd_list.insert(i, (None, 0x1))
-                self.mop2_list.insert(i, (None, 0x4))
+                    self.nd_list.insert(i, (None, 0x1))
+                    self.mop2_list.insert(i, (None, 0x4))
