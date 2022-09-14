@@ -31,9 +31,22 @@ class ImportAceCombat(Operator, ImportHelper):
         default=False,
     )
 
+    fhm_ac6: BoolProperty(
+        name="FHM Ace Combat 6",
+        description="Activate this to read FHM from Ace Combat 6",
+        default=False,
+    )
+
+    mnt_debug: BoolProperty(
+        name="MNT Debug ( for memory dumps )",
+        description="Fix the ordering armature of memory dumps ( doesn't work on all models )",
+        default=False,
+    )
+
+
     def execute(self, context):
         from . import  import_fhm
-        import_fhm.main(self.filepath, self.clear_scene)
+        import_fhm.main(self.filepath, self.clear_scene, self.fhm_ac6, self.mnt_debug)
         return {'FINISHED'}
 
 def menu_func_import(self, context):
