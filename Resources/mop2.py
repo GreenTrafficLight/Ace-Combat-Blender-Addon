@@ -70,7 +70,7 @@ class MOP2: # Animation Data
 
             def read(self, br):
                 
-                self.frames_offset = br.readUShort()
+                self.frames_offset = br.readUInt()
                 self.frames_count = br.readUShort()
                 self.offset = br.readUShort()
 
@@ -282,6 +282,7 @@ class MOP2: # Animation Data
                 first_offset = -1
 
                 for b in range(kfm1.header.bones2_count if is_bones2 else kfm1.header.bones_count):
+                    print(br.tell())
                     bone = MOP2.KFM1.SEQUENCE_BONE()
                     bone.read(br)
                 
@@ -293,6 +294,8 @@ class MOP2: # Animation Data
                 for j in range(len(f.bones)):
                      
                     br.seek(f.bones[j].offset + KFM1_SEQUENCE_position)
+
+                    print(br.tell())
 
                     b = kfm1.bones2[j] if is_bones2 else kfm1.bones[j]
 
