@@ -1,6 +1,6 @@
 from mathutils import *
 
-from .Utilities import *
+from ..Utilities import *
 
 import binascii
 

@@ -1,9 +1,6 @@
 from .Utilities import *
 
-from .ndxr import *
-from .mnt import *
-from .mop2 import *
-from .colh import *
+from .Resources import *
 
 class MEMORY_DUMP:
 
@@ -41,7 +38,7 @@ class MEMORY_DUMP:
 
                 save_addr = br.tell() - 4
 
-                ndp3 = NDXR()
+                ndp3 = ND()
                 ndp3.read(br, ">", True, addr_off)
 
                 br.seek(save_addr + ndp3.size, 0)
@@ -56,7 +53,7 @@ class MEMORY_DUMP:
 
                 save_addr = br.tell() - 4
 
-                ndxr = NDXR()
+                ndxr = ND()
                 ndxr.read(br, ">", True, addr_off)
 
                 br.seek(save_addr + ndxr.size, 0)

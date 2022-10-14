@@ -60,7 +60,7 @@ class BinaryReader:
         return struct.unpack(self.endian + "f", self.read(4))[0]
 
     def readHalfFloat(self):
-        return float(np.frombuffer(self.read(2), dtype="<e")[0])
+        return float(np.frombuffer(self.read(2), dtype=self.endian + "e")[0])
 
     def readDouble(self):
         return struct.unpack(self.endian + "d", self.read(8))[0]
