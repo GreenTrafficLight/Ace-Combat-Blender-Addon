@@ -105,7 +105,7 @@ def build_mnt(data):
 
                 if mop2 != None:
 
-                    pass
+                    print("test")
                     """
                     if "basepose" in mop2.kfm1_dict and name_index < len(mop2.kfm1_dict["basepose"].translations) and name_index < len(mop2.kfm1_dict["basepose"].quaternions):
                         translation = mop2.kfm1_dict["basepose"].translations[name_index]

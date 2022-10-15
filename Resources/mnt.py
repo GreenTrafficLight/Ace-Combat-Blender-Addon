@@ -8,9 +8,13 @@ class MNT: # Armature Data
 
     def __init__(self):
 
+        self.skeleton = None
+
         self.header = None
 
         self.size = 0
+
+        self.bone_count = 0
 
         self.unk1 = 0
 
@@ -112,5 +116,7 @@ class MNT: # Armature Data
         br.seek(self.header.offset_to_bones_names + MNT_position)
         for i in range(self.header.bones_count):
             self.names.append(br.readString())
+
+        self.bone_count = self.header.bones_count
 
     

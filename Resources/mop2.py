@@ -7,6 +7,7 @@ class MOP2: # Animation Data
     def __init__(self) -> None:
         
         self.basepos_idx = -1
+        self.anims = []
         self.kfm1_structs = []
 
     class HEADER:
@@ -174,10 +175,6 @@ class MOP2: # Animation Data
                 self.bones2 = []
                 self.sequences = []
 
-            def read(self,br):
-                
-                pass
-
         class TRANSFORMATION_TABLE:
 
             def __init__(self) -> None:
@@ -191,16 +188,12 @@ class MOP2: # Animation Data
                 self.index = br.readUShort()
                 self.offset = br.readUShort()
 
+    class BONE :
+
         def __init__(self) -> None:
-            
-            self.name = ""
-
-            self.translations = []
-            self.quaternions = []
-
-        def read(self, br):
-
-            KFM1_position = br.tell()
+            self.parent = 0
+            self.position = None
+            self.rotation = None
 
     def read(self, br):
 
@@ -230,6 +223,12 @@ class MOP2: # Animation Data
             if kfm1_struct.name == "basepose":
                 self.basepos_idx = i
             self.kfm1_structs.append(kfm1_struct)
+
+        """
+        base = []
+        for i in range(mnt.bone_count):
+            base.append(MOP2.BONE())
+        """ 
 
         for fi in range(header.kfm1_count):
 
@@ -266,7 +265,7 @@ class MOP2: # Animation Data
                 kfm1_sequence.sequence_size = br.readUInt()
                 kfm1_sequence.sequence_offset = br.readUInt()
                 kfm1.sequences.append(kfm1_sequence)
-
+                
             for k in range(kfm1.header.sequences_count):
 
                 is_bones2 = len(kfm1.bones2) != 0 and k > 0
@@ -295,16 +294,30 @@ class MOP2: # Animation Data
                      
                     br.seek(f.bones[j].offset + KFM1_SEQUENCE_position)
 
-                    print(br.tell())
-
                     b = kfm1.bones2[j] if is_bones2 else kfm1.bones[j]
 
                     idx = b.bone_idx
 
                     frame_time = 16
 
-                    is_quat = b.unk2 == 1031
+                    is_quat = b.unk2 == 1031 or b.unk2 == 1796
 
+                    x, y, z = br.readFloat(), br.readFloat(), br.readFloat()
+                    if is_quat:
+                        w = br.readFloat()
+
+                    """
+                    if is_quat:
+                        base[idx].rotation = Quaternion((w, x, y, z))
+                    else:
+                        base[idx].position = Vector((x, y, z))
+                    """
+                
+                """
+                if (first_anim and k == 0):
+                    for i in range(mnt.bone_count):
+                        pass
+                """
 
 
             

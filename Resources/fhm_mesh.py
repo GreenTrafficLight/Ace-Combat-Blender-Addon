@@ -72,20 +72,19 @@ class FHM_MESH:
                     idx = ndxr_offset + offsets[i] + j 
                     sign = fhm_file.m_chunks[idx].type
                     size = fhm_file.m_chunks[idx].size
-                    if sign in signs[i]:
 
-                        br.seek(fhm_file.m_chunks[idx].offset, 0)
+                    br.seek(fhm_file.m_chunks[idx].offset, 0)
 
-                        if i == 0:
-                            mnt = MNT()
-                            mnt.read(br)
-                            self.mnts.append(mnt)
-                        elif i == 1:
-                            mop2 = MOP2()
-                            mop2.read(br)
-                            self.mop2s.append(mop2)
-                        elif i == 2:
-                            nd = ND()
-                            nd.read(br)
-                            self.nds.append(nd)
+                    if i == 0 and sign == "MNT":
+                        mnt = MNT()
+                        mnt.read(br)
+                        self.mnts.append(mnt)
+                    elif i == 1 and sign == "MOP2":
+                        mop2 = MOP2()
+                        mop2.read(br)
+                        self.mop2s.append(mop2)
+                    elif i == 2 and (sign == "NDXR" or sign == "NDP3"):
+                        nd = ND()
+                        nd.read(br)
+                        self.nds.append(nd)
 
