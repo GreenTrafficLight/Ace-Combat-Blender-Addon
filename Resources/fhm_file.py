@@ -98,7 +98,8 @@ class FHM:
             chunk.type = 0
             if chunk.size >= 4:
                 br.seek(chunk.offset)
-                chunk.type = br.bytesToString(br.readBytes(4)).replace("\0", "")
+                #chunk.type = br.bytesToString(br.readBytes(4)).replace("\0", "")
+                chunk.type = br.readUInt()
 
             self.m_chunks.append(chunk)
 

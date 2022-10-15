@@ -195,7 +195,7 @@ class MOP2: # Animation Data
             self.position = None
             self.rotation = None
 
-    def read(self, br):
+    def read(self, br, mnt):
 
         MOP2_position = br.tell()
         header = MOP2.HEADER()
@@ -226,12 +226,6 @@ class MOP2: # Animation Data
                 self.basepos_idx = i
             kfm1_structs.append(kfm1_struct)
             self.kfm1_structs[kfm1_struct.name] = kfm1_struct
-
-        """
-        base = []
-        for i in range(mnt.bone_count):
-            base.append(MOP2.BONE())
-        """ 
 
         for fi in range(header.kfm1_count):
 
@@ -283,6 +277,10 @@ class MOP2: # Animation Data
 
                 first_offset = -1
 
+                base = []
+                for l in range(mnt.bone_count):
+                    base.append(MOP2.BONE())
+
                 for b in range(kfm1.header.bones2_count if is_bones2 else kfm1.header.bones_count):
                     print(br.tell())
                     bone = MOP2.KFM1.SEQUENCE_BONE()
@@ -309,18 +307,13 @@ class MOP2: # Animation Data
                     if is_quat:
                         w = br.readFloat()
 
-                    """
                     if is_quat:
                         base[idx].rotation = Quaternion((w, x, y, z))
                     else:
                         base[idx].position = Vector((x, y, z))
-                    """
                 
-                """
                 if (first_anim and k == 0):
-                    for i in range(mnt.bone_count):
-                        pass
-                """
+                    mnt.skeleton = base
 
 
             

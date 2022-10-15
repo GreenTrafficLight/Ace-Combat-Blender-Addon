@@ -105,7 +105,8 @@ def build_mnt(data):
 
                 if mop2 != None:
 
-                    print("test")
+                    translation = mnt.skeleton[name_index].position
+                    quaternion = mnt.skeleton[name_index].rotation
                     """
                     if "basepose" in mop2.kfm1_dict and name_index < len(mop2.kfm1_dict["basepose"].translations) and name_index < len(mop2.kfm1_dict["basepose"].quaternions):
                         translation = mop2.kfm1_dict["basepose"].translations[name_index]
@@ -142,6 +143,10 @@ def build_mnt(data):
                 mop2_index += 1
 
         else:
+            nd = data.nds[nd_index]
+
+            #build_nd(nd)
+
             nd_index += 1
             mop2_index += 1
 
