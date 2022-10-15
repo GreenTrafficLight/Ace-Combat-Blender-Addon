@@ -8,7 +8,7 @@ class MOP2: # Animation Data
         
         self.basepos_idx = -1
         self.anims = []
-        self.kfm1_structs = []
+        self.kfm1_structs = {}
 
     class HEADER:
 
@@ -215,6 +215,8 @@ class MOP2: # Animation Data
 
             kfm1_entries.append(kfm1_entry)
         
+        kfm1_structs = []
+
         for i in range(header.kfm1_count):
             kfm1_struct = MOP2.KFM1.STRUCT()
             
@@ -222,7 +224,8 @@ class MOP2: # Animation Data
             kfm1_struct.name = br.readString()
             if kfm1_struct.name == "basepose":
                 self.basepos_idx = i
-            self.kfm1_structs.append(kfm1_struct)
+            kfm1_structs.append(kfm1_struct)
+            self.kfm1_structs[kfm1_struct.name] = kfm1_struct
 
         """
         base = []
@@ -237,7 +240,7 @@ class MOP2: # Animation Data
 
             br.seek(kfm1_entries[i].offset + MOP2_position)
 
-            kfm1 = self.kfm1_structs[i]
+            kfm1 = kfm1_structs[i]
             KFM1_position = br.tell()
             kfm1.header = MOP2.KFM1.HEADER()
             kfm1.header.read(br)
