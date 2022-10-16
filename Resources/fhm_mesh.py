@@ -36,13 +36,17 @@ class FHM_MESH:
                 if ndxr_offset == -1:
                     ndxr_offset = j
             elif sign == 0x3 or sign == 0x3000000:
-                pass
+                lods_offsets.append((ndxr_offset, lods_count))
+                lods_count = 0
+                ndxr_offset = -1
+                print(fhm_file.m_chunks[j].offset)
+            """
             else:
                 if ndxr_offset != -1:
                     lods_offsets.append((ndxr_offset, lods_count))
                     lods_count = 0
                     ndxr_offset = -1
-
+            """
         print("test")
 
         if len(lods_offsets) > 0:
@@ -52,56 +56,6 @@ class FHM_MESH:
             self.nds = [None for _ in range(total_lods_count)]
 
             special_mnt = mnt_count <= 2
-            """
-            if (special_mnt and mnt_count > 0):
-                for j in range(2):
-                    idx = 0
-                    for i in range(len(fhm_file.m_chunks)):
-                        if fhm_file.m_chunks[i].type == signs[j]:
-
-                            idx += 1
-                            _from = idx * lods_count/mnt_count
-                            to = _from + lods_count/mnt_count
-                            if j == 0:
-
-                                mnt = MNT()
-                                for i in range(_from + 1, to):
-                                    pass
-                            
-                            else:
-                                
-                                mop2 = MOP2()
-                                for i in range(_from + 1, to):
-                                    pass
-            """
-
-            """
-
-            offsets = [lods_count, lods_count * 2, 0]
-            
-            for i in range(2 if special_mnt else 0, 3):
-
-                for j in range(lods_count):
-
-                    idx = ndxr_offset + offsets[i] + j 
-                    sign = fhm_file.m_chunks[idx].type
-                    size = fhm_file.m_chunks[idx].size
-
-                    br.seek(fhm_file.m_chunks[idx].offset, 0)
-
-                    if i == 0 and sign == "MNT":
-                        mnt = MNT()
-                        mnt.read(br)
-                        self.mnts[j] = mnt
-                    elif i == 1 and sign == "MOP2":
-                        mop2 = MOP2()
-                        mop2.read(br)
-                        self.mop2s[j] = mop2
-                    elif i == 2 and (sign == "NDXR" or sign == "NDP3"):
-                        nd = ND()
-                        nd.read(br)
-                        self.nds[j] = nd
-            """
 
             k = 0
 
@@ -151,5 +105,5 @@ class FHM_MESH:
 
                         idx += 1
 
-
+        
             print("test")
