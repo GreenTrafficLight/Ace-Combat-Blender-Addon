@@ -104,9 +104,11 @@ def build_mnt(data):
                 quaternion = Quaternion((1, 0, 0, 0))
 
                 if mop2 != None:
-
-                    translation = mnt.skeleton[name_index].position
-                    quaternion = mnt.skeleton[name_index].rotation
+                    
+                    if mnt.skeleton[name_index].position != None:
+                        translation = mnt.skeleton[name_index].position
+                    if mnt.skeleton[name_index].rotation != None:
+                        quaternion = mnt.skeleton[name_index].rotation
                     """
                     if "basepose" in mop2.kfm1_dict and name_index < len(mop2.kfm1_dict["basepose"].translations) and name_index < len(mop2.kfm1_dict["basepose"].quaternions):
                         translation = mop2.kfm1_dict["basepose"].translations[name_index]
